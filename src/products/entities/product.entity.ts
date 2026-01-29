@@ -1,5 +1,5 @@
 import { Optional } from '@nestjs/common';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Product {
@@ -11,7 +11,7 @@ export class Product {
   })
   name: string;
 
-  @Column('numeric', {
+  @Column('float', {
     default: 0,
   })
   price: number;
@@ -20,7 +20,7 @@ export class Product {
   @Optional()
   description?: string;
 
-  @Column({ type: 'text', unique: true })
+  @Column({ type: 'text', nullable: true })
   slug: string;
 
   @Column('int', { default: 0 })
@@ -29,6 +29,23 @@ export class Product {
   @Column('text', { array: true })
   size: string[];
 
-  @Column('boolean', { default: true })
+  @Column({ type: 'text', nullable: true })
+  @Optional()
+  gender?: string;
+
+  @Column({ default: true })
+  @Optional()
   active: boolean;
+
+  @BeforeInsert()
+  generateSlug() {
+    if (!this.slug) {
+      this.slug = this.name;
+    }
+
+    this.slug = this.slug
+      .toLowerCase()
+      .replaceAll(' ', '_')
+      .replaceAll("'", '');
+  }
 }
