@@ -1,5 +1,12 @@
 import { Optional } from '@nestjs/common';
-import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BeforeInsert,
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity()
 export class Product {
@@ -36,6 +43,18 @@ export class Product {
   @Column({ default: true })
   @Optional()
   active: boolean;
+
+  @CreateDateColumn({
+    name: 'created_at',
+    type: 'timestamp with time zone',
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({
+    name: 'updated_at',
+    type: 'timestamp with time zone',
+  })
+  updatedAt: Date;
 
   @BeforeInsert()
   generateSlug() {
