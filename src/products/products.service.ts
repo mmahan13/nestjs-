@@ -9,6 +9,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Repository } from 'typeorm';
+import { PaginationDto } from '../common/dtos/pagination.dto';
 
 @Injectable()
 export class ProductsService {
@@ -31,8 +32,13 @@ export class ProductsService {
   }
 
   // Todo: Pagination
-  async findAll(): Promise<Product[]> {
-    return await this.productsRepository.find();
+  async findAll(paginationDto: PaginationDto): Promise<Product[]> {
+    const { limit = 10, offset = 0 } = paginationDto;
+    return await this.productsRepository.find({
+      take: limit,
+      skip: offset,
+      //TODO: relations
+    });
   }
 
   async findOne(id: string): Promise<Product> {
