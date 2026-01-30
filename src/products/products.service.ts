@@ -30,6 +30,7 @@ export class ProductsService {
     }
   }
 
+  // Todo: Pagination
   async findAll(): Promise<Product[]> {
     return await this.productsRepository.find();
   }
@@ -38,7 +39,7 @@ export class ProductsService {
     const product = await this.productsRepository.findOneBy({ id });
 
     if (!product) {
-      throw new NotFoundException(`Product ${id} not found`);
+      throw new NotFoundException(`Product with id: ${id} not found`);
     }
     return product;
   }
@@ -51,8 +52,9 @@ export class ProductsService {
     return this.productsRepository.save(product);
   }
 
-  remove(id: string) {
-    return `This action removes a #${id} product`;
+  async remove(id: string) {
+    await this.findOne(id);
+    await this.productsRepository.update(id, { active: false });
   }
 
   private handlerDBExceptions(error: any) {
