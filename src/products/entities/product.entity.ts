@@ -34,8 +34,11 @@ export class Product {
   @Column('int', { default: 0 })
   stock: number;
 
-  @Column('text', { array: true })
+  @Column('text', { array: true, default: [] })
   size: string[];
+
+  @Column('text', { array: true, default: [] })
+  tags: string[];
 
   @Column({ type: 'text', nullable: true })
   @Optional()

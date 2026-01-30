@@ -30,7 +30,12 @@ export class CreateProductDto {
   public stock?: number;
   @IsString({ each: true })
   @IsArray()
-  public size: string[];
+  @IsOptional()
+  public size?: string[];
+  @IsString({ each: true })
+  @IsArray()
+  @IsOptional()
+  public tags?: string[];
   @IsString()
   @IsOptional()
   public gender?: string;
