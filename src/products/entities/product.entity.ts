@@ -1,6 +1,7 @@
 import { Optional } from '@nestjs/common';
 import {
   BeforeInsert,
+  BeforeUpdate,
   Column,
   CreateDateColumn,
   Entity,
@@ -58,6 +59,18 @@ export class Product {
 
   @BeforeInsert()
   generateSlug() {
+    if (!this.slug) {
+      this.slug = this.name;
+    }
+
+    this.slug = this.slug
+      .toLowerCase()
+      .replaceAll(' ', '_')
+      .replaceAll("'", '');
+  }
+
+  @BeforeUpdate()
+  updateSlug() {
     if (!this.slug) {
       this.slug = this.name;
     }
