@@ -5,9 +5,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { ProductImage } from './product-image.entity';
 
 @Entity()
 export class Product {
@@ -59,6 +61,9 @@ export class Product {
     type: 'timestamp with time zone',
   })
   updatedAt: Date;
+
+  @OneToMany(() => ProductImage, (productImage) => productImage.product)
+  images: ProductImage[];
 
   @BeforeInsert()
   generateSlug() {
