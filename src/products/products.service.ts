@@ -10,6 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Repository } from 'typeorm';
 import { PaginationDto } from '../common/dtos/pagination.dto';
+import { ProductImage } from './entities/product-image.entity';
 
 @Injectable()
 export class ProductsService {
@@ -18,11 +19,20 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productsRepository: Repository<Product>,
+    @InjectRepository(ProductImage)
+    private readonly productsImageRepository: Repository<ProductImage>,
   ) {}
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
     try {
-      const product = this.productsRepository.create(createProductDto);
+      const { images = [], ...productDetails } = createProductDto;
+
+      const product = this.productsRepository.create({
+        ...productDetails,
+        images: images.map((image) =>
+          this.productsImageRepository.create({ url: image }),
+        ),
+      });
       await this.productsRepository.save(product);
       return product;
     } catch (error) {
@@ -37,7 +47,6 @@ export class ProductsService {
     return await this.productsRepository.find({
       take: limit,
       skip: offset,
-      //TODO: relations
     });
   }
 
@@ -57,6 +66,7 @@ export class ProductsService {
     const product = await this.productsRepository.preload({
       id,
       ...updateProductDto,
+      images: [],
     });
 
     if (!product) {

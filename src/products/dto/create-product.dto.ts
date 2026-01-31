@@ -39,6 +39,10 @@ export class CreateProductDto {
   @IsString()
   @IsOptional()
   public gender?: string;
+  @IsString({ each: true })
+  @IsArray()
+  @IsOptional()
+  public images?: string[];
   @IsBoolean()
   @IsOptional()
   public active?: boolean;

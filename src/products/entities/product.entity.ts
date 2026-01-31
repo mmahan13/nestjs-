@@ -62,7 +62,10 @@ export class Product {
   })
   updatedAt: Date;
 
-  @OneToMany(() => ProductImage, (productImage) => productImage.product)
+  @OneToMany(() => ProductImage, (productImage) => productImage.product, {
+    cascade: true,
+    eager: true,
+  })
   images: ProductImage[];
 
   @BeforeInsert()
