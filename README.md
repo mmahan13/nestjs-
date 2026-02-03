@@ -46,6 +46,12 @@ $ docker compose up -d
 $ docker ps
 ```
 
+## Execute Seed to postman
+
+```
+http://localhost:3000/api/seed
+```
+
 ## Run tests
 
 ```bash
