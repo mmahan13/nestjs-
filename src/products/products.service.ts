@@ -8,7 +8,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { PaginationDto } from '../common/dtos/pagination.dto';
 import { ProductImage } from './entities/product-image.entity';
 
@@ -21,6 +21,7 @@ export class ProductsService {
     private readonly productsRepository: Repository<Product>,
     @InjectRepository(ProductImage)
     private readonly productsImageRepository: Repository<ProductImage>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
@@ -41,7 +42,6 @@ export class ProductsService {
     }
   }
 
-  // Todo: Pagination
   async findAll(paginationDto: PaginationDto): Promise<Product[]> {
     const { limit = 10, offset = 0 } = paginationDto;
     return await this.productsRepository.find({
@@ -63,20 +63,37 @@ export class ProductsService {
     id: string,
     updateProductDto: UpdateProductDto,
   ): Promise<Product> {
-    const product = await this.productsRepository.preload({
-      id,
-      ...updateProductDto,
-      images: [],
-    });
+    const { images, ...toUpdate } = updateProductDto;
 
-    if (!product) {
+    const product = await this.productsRepository.preload({ id, ...toUpdate });
+
+    if (!product)
       throw new NotFoundException(`Product with id: ${id} not found`);
-    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
     try {
-      await this.productsRepository.save(product);
+      if (images) {
+        await queryRunner.manager.delete(ProductImage, { product: { id } });
+
+        product.images = images.map((image) =>
+          this.productsImageRepository.create({ url: image }),
+        );
+      } else {
+        product.images = await this.productsImageRepository.findBy({
+          product: { id },
+        });
+      }
+      await queryRunner.manager.save(product);
+      await queryRunner.commitTransaction();
+      await queryRunner.release();
+
       return product;
     } catch (error) {
+      await queryRunner.rollbackTransaction();
+      await queryRunner.release();
       this.handlerDBExceptions(error);
       throw error;
     }
@@ -85,6 +102,16 @@ export class ProductsService {
   async remove(id: string) {
     await this.findOne(id);
     await this.productsRepository.update(id, { active: false });
+  }
+
+  async deleteAllProducts() {
+    const query = this.productsRepository.createQueryBuilder('product');
+
+    try {
+      return await query.delete().where({}).execute();
+    } catch (error) {
+      this.handlerDBExceptions(error);
+    }
   }
 
   private handlerDBExceptions(error: any) {
