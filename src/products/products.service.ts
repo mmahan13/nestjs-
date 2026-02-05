@@ -101,46 +101,6 @@ export class ProductsService {
     return this.findOne(id);
   }
 
-  /*   async update(
-    id: string,
-    updateProductDto: UpdateProductDto,
-  ): Promise<Product> {
-    const { images, ...toUpdate } = updateProductDto;
-
-    const product = await this.productsRepository.preload({ id, ...toUpdate });
-
-    if (!product)
-      throw new NotFoundException(`Product with id: ${id} not found`);
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      if (images) {
-        await queryRunner.manager.delete(ProductImage, { product: { id } });
-
-        product.images = images.map((image) =>
-          this.productsImageRepository.create({ url: image }),
-        );
-      } else {
-        product.images = await this.productsImageRepository.findBy({
-          product: { id },
-        });
-      }
-      await queryRunner.manager.save(product);
-      await queryRunner.commitTransaction();
-      await queryRunner.release();
-
-      return product;
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      await queryRunner.release();
-      this.handlerDBExceptions(error);
-      throw error;
-    }
-  } */
-
   async remove(id: string) {
     await this.findOne(id);
     await this.productsRepository.update(id, { active: false });
