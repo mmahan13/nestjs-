@@ -42,6 +42,7 @@ export class ProductsService {
     }
   }
 
+  // Todo: Pagination
   async findAll(paginationDto: PaginationDto): Promise<Product[]> {
     const { limit = 10, offset = 0 } = paginationDto;
     return await this.productsRepository.find({
