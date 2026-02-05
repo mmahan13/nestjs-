@@ -42,7 +42,6 @@ export class ProductsService {
     }
   }
 
-  // Todo: Pagination
   async findAll(paginationDto: PaginationDto): Promise<Product[]> {
     const { limit = 10, offset = 0 } = paginationDto;
     return await this.productsRepository.find({
@@ -61,6 +60,48 @@ export class ProductsService {
   }
 
   async update(
+    id: string,
+    updateProductDto: UpdateProductDto,
+  ): Promise<Product> {
+    const { images, ...toUpdate } = updateProductDto;
+    // 1. Preload: Prepara el objeto para actualizar campos
+    const product = await this.productsRepository.preload({ id, ...toUpdate });
+
+    if (!product)
+      throw new NotFoundException(`Product with id: ${id} not found`);
+
+    // 2. Transacción
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // A) Si hay imágenes nuevas, borramos las viejas y asignamos las nuevas
+      if (images) {
+        await queryRunner.manager.delete(ProductImage, { product: { id } });
+
+        // Creamos las instancias (aún no se guardan en DB, solo en memoria)
+        product.images = images.map((image) =>
+          this.productsImageRepository.create({ url: image }),
+        );
+      }
+
+      // B) Guarda el producto. Al tener cascade: true, esto guarda también las imágenes nuevas si las hubo.
+      await queryRunner.manager.save(product);
+
+      // C) Confirma la transacción
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.handlerDBExceptions(error);
+    } finally {
+      // 5. Liberamos el runner SIEMPRE, pase lo que pase
+      await queryRunner.release();
+    }
+    return this.findOne(id);
+  }
+
+  /*   async update(
     id: string,
     updateProductDto: UpdateProductDto,
   ): Promise<Product> {
@@ -98,7 +139,7 @@ export class ProductsService {
       this.handlerDBExceptions(error);
       throw error;
     }
-  }
+  } */
 
   async remove(id: string) {
     await this.findOne(id);
